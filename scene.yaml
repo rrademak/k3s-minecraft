@@ -1,0 +1,130 @@
+blueprint:
+  name: Tuya TS0043 ( _TZ3000_w8jwkczz ) - 3-gang remote (zha_event)
+  description: >
+    Generic blueprint for Tuya TS0043 3-gang scene switch (device fingerprint _TZ3000_w8jwkczz).
+    Enter the device IEEE and assign actions for single / double / hold per button (1..3).
+    This listens for zha_event and supports common payload variants (command / args / endpoint).
+  domain: automation
+  input:
+    device_ieee:
+      name: Device IEEE (identifier)
+      description: "The device IEEE (eg. 00:0d:6f:00:0a:90:xx:xx). You can get this from Developer Tools -> States or ZHA device page."
+      selector:
+        text:
+    button_1_single:
+      name: Button 1 — single press
+      selector:
+        action: {}
+      default: []
+    button_1_double:
+      name: Button 1 — double press
+      selector:
+        action: {}
+      default: []
+    button_1_hold:
+      name: Button 1 — hold
+      selector:
+        action: {}
+      default: []
+    button_2_single:
+      name: Button 2 — single press
+      selector:
+        action: {}
+      default: []
+    button_2_double:
+      name: Button 2 — double press
+      selector:
+        action: {}
+      default: []
+    button_2_hold:
+      name: Button 2 — hold
+      selector:
+        action: {}
+      default: []
+    button_3_single:
+      name: Button 3 — single press
+      selector:
+        action: {}
+      default: []
+    button_3_double:
+      name: Button 3 — double press
+      selector:
+        action: {}
+      default: []
+    button_3_hold:
+      name: Button 3 — hold
+      selector:
+        action: {}
+      default: []
+
+trigger:
+  - platform: event
+    event_type: zha_event
+
+variables:
+  ieee: !input device_ieee
+
+condition: []
+
+action:
+  - choose:
+      - conditions:
+          - condition: template
+            # check that event is from the chosen device. Many ZHA payloads use 'device_ieee', 'ieee' or nested 'device' keys.
+            value_template: >
+              {% set d = trigger.event.data %}
+              {{ (d.device_ieee | default(d.ieee) | default(d.device | default({})).get('ieee') | default('')) == ieee }}
+        sequence:
+          - variables:
+              ev: "{{ trigger.event.data }}"
+              # try multiple common key-names for button/endpoint and action/command
+              btn: >
+                {% if ev.endpoint is defined %}{{ ev.endpoint }}
+                {% elif ev.args is defined and ev.args|length > 0 and ev.args[0] is number %}{{ ev.args[0] }}
+                {% elif ev.button is defined %}{{ ev.button }}
+                {% else %}{{ ev.get('endpoint') | default(ev.get('button') | default('unknown')) }}{% endif %}
+              action_type: >
+                {% if ev.command is defined %}{{ ev.command }}
+                {% elif ev.args is defined and ev.args|length > 1 and ev.args[1] is string %}{{ ev.args[1] }}
+                {% elif ev.payload is defined and ev.payload.command is defined %}{{ ev.payload.command }}
+                {% else %}{{ ev.get('command') | default(ev.get('action') | default('unknown')) }}{% endif %}
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ btn|int == 1 and action_type in ['single', 'off', 'toggle', 'press'] }}"
+                sequence: !input button_1_single
+              - conditions:
+                  - condition: template
+                    value_template: "{{ btn|int == 1 and (action_type in ['double','double_press','double_click']) }}"
+                sequence: !input button_1_double
+              - conditions:
+                  - condition: template
+                    value_template: "{{ btn|int == 1 and (action_type in ['hold','long','long_press','press_and_hold']) }}"
+                sequence: !input button_1_hold
+              - conditions:
+                  - condition: template
+                    value_template: "{{ btn|int == 2 and action_type in ['single','off','toggle','press'] }}"
+                sequence: !input button_2_single
+              - conditions:
+                  - condition: template
+                    value_template: "{{ btn|int == 2 and (action_type in ['double','double_press','double_click']) }}"
+                sequence: !input button_2_double
+              - conditions:
+                  - condition: template
+                    value_template: "{{ btn|int == 2 and (action_type in ['hold','long','long_press','press_and_hold']) }}"
+                sequence: !input button_2_hold
+              - conditions:
+                  - condition: template
+                    value_template: "{{ btn|int == 3 and action_type in ['single','off','toggle','press'] }}"
+                sequence: !input button_3_single
+              - conditions:
+                  - condition: template
+                    value_template: "{{ btn|int == 3 and (action_type in ['double','double_press','double_click']) }}"
+                sequence: !input button_3_double
+              - conditions:
+                  - condition: template
+                    value_template: "{{ btn|int == 3 and (action_type in ['hold','long','long_press','press_and_hold']) }}"
+                sequence: !input button_3_hold
+            default: []
+    default: []
+mode: single
