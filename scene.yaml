@@ -13,48 +13,39 @@ blueprint:
         text:
     button_1_single:
       name: Button 1 — single press
-      selector:
-        action: {}
+      selector: {action: {}}
       default: []
     button_1_double:
       name: Button 1 — double press
-      selector:
-        action: {}
+      selector: {action: {}}
       default: []
     button_1_hold:
       name: Button 1 — hold
-      selector:
-        action: {}
+      selector: {action: {}}
       default: []
     button_2_single:
       name: Button 2 — single press
-      selector:
-        action: {}
+      selector: {action: {}}
       default: []
     button_2_double:
       name: Button 2 — double press
-      selector:
-        action: {}
+      selector: {action: {}}
       default: []
     button_2_hold:
       name: Button 2 — hold
-      selector:
-        action: {}
+      selector: {action: {}}
       default: []
     button_3_single:
       name: Button 3 — single press
-      selector:
-        action: {}
+      selector: {action: {}}
       default: []
     button_3_double:
       name: Button 3 — double press
-      selector:
-        action: {}
+      selector: {action: {}}
       default: []
     button_3_hold:
       name: Button 3 — hold
-      selector:
-        action: {}
+      selector: {action: {}}
       default: []
 
 trigger:
@@ -70,14 +61,16 @@ action:
   - choose:
       - conditions:
           - condition: template
-            # check that event is from the chosen device. Many ZHA payloads use 'device_ieee', 'ieee' or nested 'device' keys.
             value_template: >
               {% set d = trigger.event.data %}
-              {{ (d.device_ieee | default(d.ieee) | default(d.device | default({})).get('ieee') | default('')) == ieee }}
+              {% set ieee_val = d.device_ieee
+                               | default(d.ieee)
+                               | default((d.device | default({})).get('ieee'))
+                               | default('') %}
+              {{ ieee_val == ieee }}
         sequence:
           - variables:
               ev: "{{ trigger.event.data }}"
-              # try multiple common key-names for button/endpoint and action/command
               btn: >
                 {% if ev.endpoint is defined %}{{ ev.endpoint }}
                 {% elif ev.args is defined and ev.args|length > 0 and ev.args[0] is number %}{{ ev.args[0] }}
@@ -95,11 +88,11 @@ action:
                 sequence: !input button_1_single
               - conditions:
                   - condition: template
-                    value_template: "{{ btn|int == 1 and (action_type in ['double','double_press','double_click']) }}"
+                    value_template: "{{ btn|int == 1 and action_type in ['double','double_press','double_click'] }}"
                 sequence: !input button_1_double
               - conditions:
                   - condition: template
-                    value_template: "{{ btn|int == 1 and (action_type in ['hold','long','long_press','press_and_hold']) }}"
+                    value_template: "{{ btn|int == 1 and action_type in ['hold','long','long_press','press_and_hold'] }}"
                 sequence: !input button_1_hold
               - conditions:
                   - condition: template
@@ -107,11 +100,11 @@ action:
                 sequence: !input button_2_single
               - conditions:
                   - condition: template
-                    value_template: "{{ btn|int == 2 and (action_type in ['double','double_press','double_click']) }}"
+                    value_template: "{{ btn|int == 2 and action_type in ['double','double_press','double_click'] }}"
                 sequence: !input button_2_double
               - conditions:
                   - condition: template
-                    value_template: "{{ btn|int == 2 and (action_type in ['hold','long','long_press','press_and_hold']) }}"
+                    value_template: "{{ btn|int == 2 and action_type in ['hold','long','long_press','press_and_hold'] }}"
                 sequence: !input button_2_hold
               - conditions:
                   - condition: template
@@ -119,12 +112,11 @@ action:
                 sequence: !input button_3_single
               - conditions:
                   - condition: template
-                    value_template: "{{ btn|int == 3 and (action_type in ['double','double_press','double_click']) }}"
+                    value_template: "{{ btn|int == 3 and action_type in ['double','double_press','double_click'] }}"
                 sequence: !input button_3_double
               - conditions:
                   - condition: template
-                    value_template: "{{ btn|int == 3 and (action_type in ['hold','long','long_press','press_and_hold']) }}"
+                    value_template: "{{ btn|int == 3 and action_type in ['hold','long','long_press','press_and_hold'] }}"
                 sequence: !input button_3_hold
-            default: []
     default: []
 mode: single
