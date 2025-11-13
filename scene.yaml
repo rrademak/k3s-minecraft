@@ -1,61 +1,25 @@
 blueprint:
-  name: Tuya TS0043 (_TZ3000_w8jwkczz) - 3-gang remote (ZHA)
+  name: Tuya TS0043 (_TZ3000_w8jwkczz) - 3 button remote (ZHA)
   description: >
-    Blueprint for Tuya TS0043 3-gang scene switch (Zigbee ID _TZ3000_w8jwkczz).
-    Works with ZHA integration. Specify the device IEEE and assign actions for
-    single, double, and hold presses on each button (1–3).
+    Works with Tuya TS0043 Zigbee scene switch (_TZ3000_w8jwkczz) under ZHA.
+    Supports single press on buttons 1, 2, and 3.
   domain: automation
   input:
     device_ieee:
       name: Device IEEE
-      description: >
-        IEEE address of the remote (e.g. 00:0d:6f:00:0a:90:xx:xx).
-        Find it in Settings → Devices → ZHA → your device → Info.
+      description: "Find it in Settings → Devices → ZHA → your device → Info."
       selector:
         text:
-
     button_1_single:
       name: Button 1 — single press
       selector: {action: {}}
       default: []
-
-    button_1_double:
-      name: Button 1 — double press
-      selector: {action: {}}
-      default: []
-
-    button_1_hold:
-      name: Button 1 — hold
-      selector: {action: {}}
-      default: []
-
     button_2_single:
       name: Button 2 — single press
       selector: {action: {}}
       default: []
-
-    button_2_double:
-      name: Button 2 — double press
-      selector: {action: {}}
-      default: []
-
-    button_2_hold:
-      name: Button 2 — hold
-      selector: {action: {}}
-      default: []
-
     button_3_single:
       name: Button 3 — single press
-      selector: {action: {}}
-      default: []
-
-    button_3_double:
-      name: Button 3 — double press
-      selector: {action: {}}
-      default: []
-
-    button_3_hold:
-      name: Button 3 — hold
       selector: {action: {}}
       default: []
 
@@ -82,54 +46,21 @@ action:
         sequence:
           - variables:
               ev: "{{ trigger.event.data }}"
-              btn: >
-                {% if ev.endpoint is defined %}{{ ev.endpoint }}
-                {% elif ev.endpoint_id is defined %}{{ ev.endpoint_id }}
-                {% elif ev.args is defined and ev.args|length > 0 and ev.args[0] is number %}{{ ev.args[0] }}
-                {% elif ev.button is defined %}{{ ev.button }}
-                {% else %}0{% endif %}
-              action_type: >
-                {% if ev.command is defined %}{{ ev.command }}
-                {% elif ev.args is defined and ev.args|length > 1 and ev.args[1] is string %}{{ ev.args[1] }}
-                {% elif ev.payload is defined and ev.payload.command is defined %}{{ ev.payload.command }}
-                {% else %}{{ ev.get('command') | default(ev.get('action') | default('unknown')) }}{% endif %}
+              btn: "{{ ev.endpoint_id | default(0) }}"
+              action_type: "{{ ev.command | default('') }}"
           - choose:
               - conditions:
                   - condition: template
-                    value_template: "{{ (btn|default(0)|int) == 1 and action_type in ['single','off','toggle','press'] }}"
+                    value_template: "{{ btn == 1 and action_type == 'remote_button_short_press' }}"
                 sequence: !input button_1_single
               - conditions:
                   - condition: template
-                    value_template: "{{ (btn|default(0)|int) == 1 and action_type in ['double','double_press','double_click'] }}"
-                sequence: !input button_1_double
-              - conditions:
-                  - condition: template
-                    value_template: "{{ (btn|default(0)|int) == 1 and action_type in ['hold','long','long_press','press_and_hold'] }}"
-                sequence: !input button_1_hold
-              - conditions:
-                  - condition: template
-                    value_template: "{{ (btn|default(0)|int) == 2 and action_type in ['single','off','toggle','press'] }}"
+                    value_template: "{{ btn == 2 and action_type == 'remote_button_short_press' }}"
                 sequence: !input button_2_single
               - conditions:
                   - condition: template
-                    value_template: "{{ (btn|default(0)|int) == 2 and action_type in ['double','double_press','double_click'] }}"
-                sequence: !input button_2_double
-              - conditions:
-                  - condition: template
-                    value_template: "{{ (btn|default(0)|int) == 2 and action_type in ['hold','long','long_press','press_and_hold'] }}"
-                sequence: !input button_2_hold
-              - conditions:
-                  - condition: template
-                    value_template: "{{ (btn|default(0)|int) == 3 and action_type in ['single','off','toggle','press'] }}"
+                    value_template: "{{ btn == 3 and action_type == 'remote_button_short_press' }}"
                 sequence: !input button_3_single
-              - conditions:
-                  - condition: template
-                    value_template: "{{ (btn|default(0)|int) == 3 and action_type in ['double','double_press','double_click'] }}"
-                sequence: !input button_3_double
-              - conditions:
-                  - condition: template
-                    value_template: "{{ (btn|default(0)|int) == 3 and action_type in ['hold','long','long_press','press_and_hold'] }}"
-                sequence: !input button_3_hold
     default: []
 
 mode: single
